@@ -48,13 +48,17 @@ trajectoire = md.load_xtc("E:/MODELISATION/input/md_200ns_OK.xtc",
 #Atome de reference = phosphate du premier residu (numero 8)
 
 
-#Récupère les atomes de phosphate
+#Récupère les numeros des atomes de phosphate dans une liste
 ref_list = []
 x = 8
 for i in range(1, 256):
     ref_list.append(x)
     x += 54
 print(ref_list)
+#Puis construit la liste des points de references de tous les residus
+origin_list = []
+for atome in ref_list:
+    
 
 
 
