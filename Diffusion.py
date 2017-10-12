@@ -61,19 +61,22 @@ for i in range(1, 256):
 print(ref_list)
 #Puis construit la liste des points de references de tous les residus
 origin_list = []
-for atome in ref_list:
-    
+for atom in ref_list:
+    origin_list.append(trajectoire.xyz[0, atom])
 
 
 
 ref_origin = trajectoire.xyz[0, 8]
-frame_list = [0, 10, 50, 100, 200, 500, 1000, 2000]
+frame_list = [10, 50, 100, 200, 300, 500, 700, 1000, 2000]
 
 coordinate_array = []
 distance_array = []
 
-for frame in frame_list:
-    coordinate_array.append(trajectoire.xyz[frame, 8])
+#Récuperation des coordonées de tous les atomes de reference
+#Pour les frames de frame_list
+for atom in ref_list:
+    for frame in frame_list:
+        coordinate_array.append(trajectoire.xyz[frame, atom])
 
 for coordinate in coordinate_array:
     print(
