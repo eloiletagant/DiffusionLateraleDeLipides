@@ -5,7 +5,8 @@
 
 # -*- coding: Utf8 -*-
 
-
+import numpy
+import mdtraj as md
 
 
 def ReadPositions(filename):
