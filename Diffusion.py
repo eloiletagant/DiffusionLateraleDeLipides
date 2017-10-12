@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 # coding=utf-8
 ###############################################################################
 ##############################PROJET MODELISATION##############################
@@ -7,7 +8,10 @@ from os import chdir
 import mdtraj as md
 import math
 
+import progressbar as pb
 
+progress = pb.ProgressBar(widgets=_widgets, maxval = 500000).start()
+progvar = 0
 
 def ReadPositions(filename):
     """
