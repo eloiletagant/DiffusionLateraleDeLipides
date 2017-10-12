@@ -5,6 +5,7 @@
 import re
 from os import chdir
 import mdtraj as md
+import math
 
 
 
@@ -44,9 +45,37 @@ print("Chargement de la trajectoire des lipides\n")
 trajectoire = md.load_xtc("E:/MODELISATION/input/md_200ns_OK.xtc",
                 top="E:\MODELISATION\input\start.pdb")
 #Stockage de la position de notre atome de reference a la frame 0
-#Atome de reference = phosphate du premier residu
+#Atome de reference = phosphate du premier residu (numero 8)
+
+
+#Récupère les atomes de phosphate
+ref_list = []
+x = 8
+for i in range(1, 256):
+    ref_list.append(x)
+    x += 54
+print(ref_list)
+
+
+
 ref_origin = trajectoire.xyz[0, 8]
-coordinate_array = 
+frame_list = [0, 10, 50, 100, 200, 500, 1000, 2000]
+
+coordinate_array = []
+distance_array = []
+
+for frame in frame_list:
+    coordinate_array.append(trajectoire.xyz[frame, 8])
+
+for coordinate in coordinate_array:
+    print(
+        math.sqrt(
+            ((coordinate[0] - ref_origin[0])**2) + ((
+            coordinate[1] - ref_origin[1])**2)
+        )
+    )
+
+
 
 print('\nMENU :')
 menu = {}
