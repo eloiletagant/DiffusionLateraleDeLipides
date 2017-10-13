@@ -30,27 +30,27 @@ def get_distance(trajectory, atom, frame):
         )
     )
 
-def get_distances_list(trajectory, frame_window, atom):
+def get_distances_list(trajectory, frame_window, atoms_list, atom):
     """
     Genere les distances pour une fenetre de temps, pour un atome de reference
+    et les empile dans la liste atoms_list dans les arguments
     :param trajectory:
     :param frame_window:
     :param atom:
     :return:
     """
-    distances_list = []
     # Parcours de l'ensemble des frames
     # print("Nombre total de frames : ", trajectory.n_frames - frame_window)
     frame = 0
     last_frame = trajectory.n_frames - frame_window
     while frame < last_frame:
         # print(frame)
-        distances_list.append(
+        atoms_list.append(
             get_distance(trajectory, atom, frame)
         )
         frame += 10
 
-    return distances_list
+    return 1
 
 def get_atoms_list(trajectory, topology, frame_window):
     """
@@ -63,8 +63,8 @@ def get_atoms_list(trajectory, topology, frame_window):
     atoms_list = []
     for atom in topology.atoms:
         if atom.name == "P1":
-            atoms_list.append(get_distances_list(trajectory, frame_window,
-                                                 atom.index))
+            get_distances_list(trajectory, frame_window, atoms_list,
+                               atom.index)
     return atoms_list
 
 
@@ -98,12 +98,14 @@ print(topology)
 frame_windows = [10, 50, 100, 200, 300, 500, 700, 1000, 2000]
 
 # Test liste de distances pour 1 fenetre mais pour tous les atomes de phosphate
-#frames_dict = {}
-#for window in frame_windows:
-#    frames_dict[window] = get_atoms_list(trajectory, topology, window)
+frames_dict = {}
+for window in frame_windows:
+    frames_dict[window] = get_atoms_list(trajectory, topology, window)
 
-with open('output\diffusion.csv', 'wb') as csvfile:
+print(len(frames_dict[2000]))
+
+"""with open('output\diffusion.csv', 'wb') as csvfile:
     writer = csv.writer(csvfile, delimiter=';', quotechar='|',
                         quoting=csv.QUOTE_MINIMAL)
     for window in frame_windows:
-        writer.writerow(get_atoms_list(trajectory, topology, window))
+        writer.writerow(get_atoms_list(trajectory, topology, window))"""
