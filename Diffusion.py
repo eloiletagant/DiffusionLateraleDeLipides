@@ -3,6 +3,7 @@
 ##############################PROJET MODELISATION##############################
 ###############################################################################
 import mdtraj as md
+import csv
 import math
 
 def get_distance(trajectory, atom, frame):
@@ -19,12 +20,14 @@ def get_distance(trajectory, atom, frame):
     return (
         # La racine carree a ete ignore car elle ralenti le script et ne
         # change pas les distances relatives
-        ((trajectory.xyz[frame, atom][0] - trajectory.xyz[frame + step,
+        math.sqrt(
+            ((trajectory.xyz[frame, atom][0] - trajectory.xyz[frame + step,
                                                           atom][0]
           ) ** 2)
         + ((trajectory.xyz[frame, atom][1] - trajectory.xyz[frame + step,
                                                             atom][1]
             ) ** 2)
+        )
     )
 
 def get_distances_list(trajectory, frame_window, atom):
@@ -49,15 +52,21 @@ def get_distances_list(trajectory, frame_window, atom):
 
     return distances_list
 
-def get_atoms_dict(trajectory, topology, frame_window):
-    atoms_dict = {}
+def get_atoms_list(trajectory, topology, frame_window):
+    """
+    Genere une liste des distances pour chaque atomes pour 1 fenetre donnee
+    :param trajectory:
+    :param topology:
+    :param frame_window:
+    :return:
+    """
+    atoms_list = []
     for atom in topology.atoms:
         if atom.name == "P1":
-            print(atom.index)
-            atoms_dict[atom.index] = get_distances_list(trajectory,
-                                                          frame_window,
-                                                          atom.index)
-    return atoms_dict
+            atoms_list.append(get_distances_list(trajectory, frame_window,
+                                                 atom.index))
+    return atoms_list
+
 
 ######################################MAIN#####################################
 print("""
@@ -81,43 +90,20 @@ print(topology)
 #print(distances_list)
 
 # Test liste de distances pour 1 fenetre mais pour tous les atomes de phosphate
-atoms_dict = get_atoms_dict(trajectory, topology, 50)
-print(atoms_dict)
+#atoms_dict = get_atoms_dict(trajectory, topology, 50)
+#print(atoms_dict)
 
 # Initialisation de la liste des intervalles de fenêtres
 # On a 2002 frames pour une trajectoire de 200 ns
 frame_windows = [10, 50, 100, 200, 300, 500, 700, 1000, 2000]
 
-"""
-    print('\nMENU :')
-    menu = {}
-    menu[2] = "-> Faire des trucs"
-    menu[3] = "-> Faire des trucs"
-    menu[4] = "-> Faire des trucs"
-    menu[5] = "-> Faire des trucs"
-    menu[6] = "-> Faire des trucs"
-    menu[1] = "-> Quitter"
-    
-    while True:
-        options = menu.keys()
-        for entry in options:
-            print(entry, menu[entry])
-    
-        selection = input("Choisissez l'une des options : ")
-    
-        if selection == 1:
-            print("Au revoir !")
-            break
-        elif selection == 2:
-            break
-        elif selection == 3:
-            break
-        elif selection == 4:
-            break
-        elif selection == 5:
-            break
-        elif selection == 6:
-            break
-        else:
-            print("L'option choisie n'existe pas!")
-"""
+# Test liste de distances pour 1 fenetre mais pour tous les atomes de phosphate
+#frames_dict = {}
+#for window in frame_windows:
+#    frames_dict[window] = get_atoms_list(trajectory, topology, window)
+
+with open('output\diffusion.csv', 'wb') as csvfile:
+    writer = csv.writer(csvfile, delimiter=';', quotechar='|',
+                        quoting=csv.QUOTE_MINIMAL)
+    for window in frame_windows:
+        writer.writerow(get_atoms_list(trajectory, topology, window))
