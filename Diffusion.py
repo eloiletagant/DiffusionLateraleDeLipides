@@ -3,38 +3,70 @@
 ###############################################################################
 ##############################PROJET MODELISATION##############################
 ###############################################################################
-import re
-from os import chdir
 import mdtraj as md
+import csv
 import math
 
-import progressbar as pb
-
-progress = pb.ProgressBar(widgets=_widgets, maxval = 500000).start()
-progvar = 0
-
-def ReadPositions(filename):
+def get_distance(trajectory, atom, frame):
     """
-    Lecture des positions initiales des atomes de references.
-    :param filename:
+    Pour un atome et une fenetre de temps donnee, calcule la distance entre
+    la position de l'atome de reference au debut de la fenetre et sa position
+    a la fin.
+    :param trajectory:
+    :param atom:
+    :param frame:
     :return:
     """
-    chdir("E:/MODELISATION/input/start.pdb" )
-    obj = open(filename, 'r')
-    regle = re.compile(r"OUI", re.MULTILINE) #mettre la regle de parsing ici
-    rep = []
-    data = ""
-    while 1:
-        ligne = obj.readline()
-        if ligne == "":
-            break
-        elif (regle.match(ligne)):
-            rep.append(data)
-            data = ""
-    rep.append(data)
-    obj.close()
-    chdir("E:/MODELISATION/input/DataDiffusion" )
-    return(rep[1:])
+    step = 10
+    return (
+        # La racine carree a ete ignore car elle ralenti le script et ne
+        # change pas les distances relatives
+        math.sqrt(
+            ((trajectory.xyz[frame, atom][0] - trajectory.xyz[frame + step,
+                                                          atom][0]
+          ) ** 2)
+        + ((trajectory.xyz[frame, atom][1] - trajectory.xyz[frame + step,
+                                                            atom][1]
+            ) ** 2)
+        )
+    )
+
+def get_distances_list(trajectory, frame_window, atoms_list, atom):
+    """
+    Genere les distances pour une fenetre de temps, pour un atome de reference
+    et les empile dans la liste atoms_list dans les arguments
+    :param trajectory:
+    :param frame_window:
+    :param atom:
+    :return:
+    """
+    # Parcours de l'ensemble des frames
+    # print("Nombre total de frames : ", trajectory.n_frames - frame_window)
+    frame = 0
+    last_frame = trajectory.n_frames - frame_window
+    while frame < last_frame:
+        # print(frame)
+        atoms_list.append(
+            get_distance(trajectory, atom, frame)
+        )
+        frame += 10
+
+    return 1
+
+def get_atoms_list(trajectory, topology, frame_window):
+    """
+    Genere une liste des distances pour chaque atomes pour 1 fenetre donnee
+    :param trajectory:
+    :param topology:
+    :param frame_window:
+    :return:
+    """
+    atoms_list = []
+    for atom in topology.atoms:
+        if atom.name == "P1":
+            get_distances_list(trajectory, frame_window, atoms_list,
+                               atom.index)
+    return atoms_list
 
 
 ######################################MAIN#####################################
@@ -44,88 +76,37 @@ print("""
     Par Anatole et Pierre                                         
 """)
 
-print("Chargement de la trajectoire des lipides\n")
-#Stockage de la trajectoire dans une variable
-trajectoire = md.load_xtc("E:/MODELISATION/input/md_200ns_OK.xtc",
-                top="E:\MODELISATION\input\start.pdb")
-#Stockage de la position de notre atome de reference a la frame 0
-#Atome de reference = phosphate du premier residu (numero 8)
+print("Chargement de la trajectoire des lipides...")
+# Stockage de la trajectoire dans une variable
+trajectory = md.load_xtc("E:/MODELISATION/input/md_200ns_OK.xtc",
+                         top="E:\MODELISATION\input\start.pdb")
+print(trajectory)
+print("Chargement de la topologie a partir de la trajectoire...")
+# Stockage de la topologie
+topology = trajectory.topology
+print(topology)
 
+# Test de liste de distance pour 1 atome et 1 fenetre:
+#distances_list = get_distances_list(trajectory, 50, 61)
+#print(distances_list)
 
-#Récupère les numeros des atomes de phosphate dans une liste
-ref_list = []
-x = 8
-for i in range(1, 256):
-    ref_list.append(x)
-    x += 54
-print(ref_list)
-#Puis construit la liste des points de references de tous les residus
-origin_list = []
-for atom in ref_list:
-    origin_list.append(trajectoire.xyz[0, atom])
+# Test liste de distances pour 1 fenetre mais pour tous les atomes de phosphate
+#atoms_dict = get_atoms_dict(trajectory, topology, 50)
+#print(atoms_dict)
 
+# Initialisation de la liste des intervalles de fenêtres
+# On a 2002 frames pour une trajectoire de 200 ns
+frame_windows = [10, 50, 100, 200, 300, 500, 700, 1000, 2000]
 
+# Test liste de distances pour 1 fenetre mais pour tous les atomes de phosphate
+frames_dict = {}
+for window in frame_windows:
+    frames_dict[window] = get_atoms_list(trajectory, topology, window)
 
-ref_origin = trajectoire.xyz[0, 8]
-frame_list = [10, 50, 100, 200, 300, 500, 700, 1000, 2000]
+print(len(frames_dict[2000]))
 
-coordinate_array = []
-distance_array = []
-
-#Récuperation des coordonées de tous les atomes de reference
-#Pour les frames de frame_list
-for atom in ref_list:
-    for frame in frame_list:
-        coordinate_array.append(trajectoire.xyz[frame, atom])
-
-for coordinate in coordinate_array:
-    print(
-        math.sqrt(
-            ((coordinate[0] - ref_origin[0])**2) + ((
-            coordinate[1] - ref_origin[1])**2)
-        )
-    )
-
-
-
-print('\nMENU :')
-menu = {}
-menu[2] = "-> Faire des trucs"
-menu[3] = "-> Afficher des coordonees"
-menu[4] = "-> Afficher des coordonees"
-menu[5] = "-> Afficher des coordonees"
-menu[6] = "-> Afficher des coordonees"
-menu[1] = "-> Quitter"
-
-while True:
-    options = menu.keys()
-    for entry in options:
-        print(entry, menu[entry])
-
-    selection = input("Choisissez l'une des options : ")
-
-    if selection == 1:
-        print("Au revoir !")
-        break
-    elif selection == 2:
-        break
-    elif selection == 3:
-        print(trajectoire)
-    elif selection == 4:
-        #selection du phosphate du residu numero 1
-        for i in range(1, 10):
-            array = []
-            #print('x: %s\ty: %s\tz: %s' % tuple(trajectoire.xyz[i, 8, :]))
-            print(trajectoire.xyz[i, 8])
-            #array.append(tuple(trajectoire.xyz[i, 8, :])
-    elif selection == 5:
-        break
-    elif selection == 6:
-        break
-    else:
-        print("L'option choisie n'existe pas!")
-
-
-
-#atom_distances = md.compute_distances(t, atom_pairs, periodic=True, opt=True)
-#atom_pairs = np.ndarray(shape = (num_pairs, 2), dtype = int)
+"""with open('output\diffusion.csv', 'wb') as csvfile:
+    writer = csv.writer(csvfile, delimiter=';', quotechar='|',
+                        quoting=csv.QUOTE_MINIMAL)
+    for window in frame_windows:
+        writer.writerow(get_atoms_list(trajectory, topology, window))"""
