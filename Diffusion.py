@@ -68,6 +68,25 @@ def get_atoms_list(trajectory, topology, frame_window):
                                atom.index)
     return atoms_list
 
+def get_clusters(data, maxgap):
+    '''Arrange data into groups where successive elements
+       differ by no more than *maxgap*
+
+        > cluster([1, 6, 9, 100, 102, 105, 109, 134, 139], maxgap=10)
+        [[1, 6, 9], [100, 102, 105, 109], [134, 139]]
+
+        > cluster([1, 6, 9, 99, 100, 102, 105, 134, 139, 141], maxgap=10)
+        [[1, 6, 9], [99, 100, 102, 105], [134, 139, 141]]
+    '''
+    data.sort()
+    groups = [[data[0]]]
+    for x in data[1:]:
+        if abs(x - groups[-1][-1]) <= maxgap:
+            groups[-1].append(x)
+        else:
+            groups.append([x])
+    return groups
+
 
 ######################################MAIN#####################################
 print("""
@@ -103,10 +122,18 @@ frames_dict = {}
 for window in frame_windows:
     frames_dict[window] = get_atoms_list(trajectory, topology, window)
 
-print(len(frames_dict[2000]))
 
-"""with open('output\diffusion.csv', 'wb') as csvfile:
+with open('output\diffusion.csv', 'wb') as csvfile:
     writer = csv.writer(csvfile, delimiter=';', quotechar='|',
                         quoting=csv.QUOTE_MINIMAL)
-    for window in frame_windows:
-        writer.writerow(get_atoms_list(trajectory, topology, window))"""
+    for key in frames_dict.keys():
+        #fenetre cluster effectif
+        clusters_list = get_clusters(frames_dict[key], maxgap=0.01)
+        for cluster in clusters_list:
+            number = clusters_list.index(cluster)
+            length = len(cluster) #nombre de valeurs dans le cluster
+            writer.writerow([
+                key,
+                number,
+                length
+            ])
